@@ -16,6 +16,8 @@ import { PollResults } from "@/components/poll-results";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getActivePoll, getVotes, addVote, Poll } from "@/lib/firebase-models";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function ActivePoll() {
   const [poll, setPoll] = useState<Poll | null>(null);
@@ -32,6 +34,16 @@ export default function ActivePoll() {
       .catch(() => setError("Failed to load poll."))
       .finally(() => setLoading(false));
   }, []);
+
+  // Real-time votes listener
+  useEffect(() => {
+    if (!poll) return;
+    const votesRef = collection(db, "polls", poll.id, "votes");
+    const unsubscribe = onSnapshot(votesRef, (snapshot) => {
+      setVotes(snapshot.docs.map((doc) => doc.data()));
+    });
+    return () => unsubscribe();
+  }, [poll]);
 
   useEffect(() => {
     if (poll) {
@@ -145,8 +157,9 @@ export default function ActivePoll() {
           </RadioGroup>
         </CardContent>
         <CardFooter className="flex justify-between">
-          {/* TODO: Show real total votes from Firestore */}
-          <div className="text-sm text-muted-foreground">Total votes</div>
+          <div className="text-sm text-muted-foreground">
+            {votes.length} total votes
+          </div>
           <Button onClick={handleVote} disabled={!selectedOption || loading}>
             {loading ? "Voting..." : "Vote"}
           </Button>
