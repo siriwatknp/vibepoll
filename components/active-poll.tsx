@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { PollResults } from "@/components/poll-results";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { getActivePoll, getVotes, Poll } from "@/lib/firebase-models";
+import { getActivePoll, getVotes, addVote, Poll } from "@/lib/firebase-models";
 
 export default function ActivePoll() {
   const [poll, setPoll] = useState<Poll | null>(null);
@@ -34,15 +34,53 @@ export default function ActivePoll() {
   }, []);
 
   useEffect(() => {
-    if (poll && hasVoted) {
-      getVotes(poll.id).then(setVotes);
+    if (poll) {
+      // Check if user has already voted on this poll
+      const voted =
+        typeof window !== "undefined" &&
+        localStorage.getItem(`voted_${poll.id}`);
+      setHasVoted(!!voted);
+      if (hasVoted) {
+        getVotes(poll.id).then(setVotes);
+      }
     }
   }, [poll, hasVoted]);
 
-  const handleVote = () => {
-    if (!selectedOption) return;
-    setHasVoted(true);
-    // TODO: Send vote to Firestore
+  const handleVote = async () => {
+    if (!selectedOption || !poll) return;
+    // Prevent duplicate votes
+    if (
+      typeof window !== "undefined" &&
+      localStorage.getItem(`voted_${poll.id}`)
+    ) {
+      setHasVoted(true);
+      return;
+    }
+    setLoading(true);
+    try {
+      // Use a random string as voteId for anonymous users
+      const voteId =
+        typeof window !== "undefined"
+          ? window.crypto?.randomUUID?.() || Math.random().toString(36).slice(2)
+          : Math.random().toString(36).slice(2);
+      await addVote(
+        poll.id,
+        {
+          optionId: selectedOption,
+          votedAt: new Date().toISOString(),
+        },
+        voteId
+      );
+      if (typeof window !== "undefined") {
+        localStorage.setItem(`voted_${poll.id}`, selectedOption);
+      }
+      setHasVoted(true);
+      getVotes(poll.id).then(setVotes);
+    } catch (err) {
+      setError("Failed to submit vote. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
@@ -109,8 +147,8 @@ export default function ActivePoll() {
         <CardFooter className="flex justify-between">
           {/* TODO: Show real total votes from Firestore */}
           <div className="text-sm text-muted-foreground">Total votes</div>
-          <Button onClick={handleVote} disabled={!selectedOption}>
-            Vote
+          <Button onClick={handleVote} disabled={!selectedOption || loading}>
+            {loading ? "Voting..." : "Vote"}
           </Button>
         </CardFooter>
       </Card>
