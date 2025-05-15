@@ -17,14 +17,24 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { addPoll, setActivePoll } from "@/lib/firebase-models";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function CreatePoll() {
+  const {
+    user,
+    loading: authLoading,
+    error: authError,
+    login,
+    logout,
+  } = useAuth();
   const [options, setOptions] = useState<string[]>(["", ""]);
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const addOption = () => {
     setOptions([...options, ""]);
@@ -75,8 +85,74 @@ export default function CreatePoll() {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        Checking authentication...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className="container mx-auto px-4 py-8 max-w-md">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">Admin Login</CardTitle>
+            <CardDescription>
+              Sign in to create and publish polls
+            </CardDescription>
+          </CardHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              login(email, password);
+            }}
+          >
+            <CardContent className="space-y-4">
+              {authError && (
+                <div className="text-red-500 text-sm mb-2">{authError}</div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end gap-2">
+              <Button type="submit" disabled={authLoading}>
+                {authLoading ? "Signing in..." : "Sign In"}
+              </Button>
+            </CardFooter>
+          </form>
+        </Card>
+      </main>
+    );
+  }
+
   return (
     <main className="container mx-auto px-4 py-8 max-w-2xl">
+      <div className="flex justify-end items-center mb-4 gap-2">
+        <span className="text-sm text-muted-foreground">{user.email}</span>
+        <Button variant="outline" size="sm" onClick={logout}>
+          Logout
+        </Button>
+      </div>
       <Link
         href="/"
         className="flex items-center gap-2 text-muted-foreground mb-6 hover:text-foreground transition-colors"
