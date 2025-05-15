@@ -25,6 +25,7 @@ export type Poll = {
   id: string;
   question: string;
   options: PollOption[];
+  totalVotes: number;
   createdAt: string; // ISO string
   expiresAt: string; // ISO string
   isActive: boolean;
@@ -45,7 +46,17 @@ export async function getActivePoll(): Promise<Poll | null> {
   const snapshot = await getDocs(q);
   if (snapshot.empty) return null;
   const docSnap = snapshot.docs[0];
-  return { id: docSnap.id, ...docSnap.data() } as Poll;
+  const data = docSnap.data();
+  return {
+    id: docSnap.id,
+    question: data.question,
+    options: data.options,
+    totalVotes: data.totalVotes ?? 0,
+    createdAt: data.createdAt,
+    expiresAt: data.expiresAt,
+    isActive: data.isActive,
+    createdBy: data.createdBy,
+  };
 }
 
 // Utility: Add a new poll (admin only)
