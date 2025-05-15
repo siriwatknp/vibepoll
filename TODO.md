@@ -2,6 +2,11 @@
 
 ## Todo List
 
+- [ ] Next Up
+
+  - [x] Create an admin page for poll creation
+  - [x] Allow admins to publish a new poll (which sets it as active and deactivates the previous one)
+
 - [ ] 1. Firestore Integration
   - [x] Set up Firebase and Firestore in the project
   - [x] Create Firestore data models for polls and votes
@@ -13,8 +18,6 @@
   - [ ] Set up admin authentication (e.g., with LINE login or another provider)
   - [ ] Restrict poll creation and publishing to authenticated admins only
 - [ ] 4. Admin Poll Management
-  - [ ] Create an admin page for poll creation
-  - [ ] Allow admins to publish a new poll (which sets it as active and deactivates the previous one)
   - [ ] Optionally, allow admins to see a list/history of previous polls (not required for MVP)
 - [ ] 5. UI/UX Enhancements
   - [ ] Add loading and error states for all data fetching
