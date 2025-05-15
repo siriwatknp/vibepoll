@@ -87,7 +87,6 @@ export default function ActivePoll() {
         localStorage.setItem(`voted_${poll.id}`, selectedOption);
       }
       setHasVoted(true);
-      getVotes(poll.id).then(setVotes);
     } catch (err) {
       setError("Failed to submit vote. Please try again.");
     } finally {
